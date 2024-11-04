@@ -51,3 +51,28 @@ export class DatadrivenComponent {
   }
 
 }
+
+
+
+---------
+
+
+
+<div class="component">
+    <form (ngSubmit)="addUser()" [formGroup]="myForm">
+        UserName:<input type="text"  formControlName="uname"/>
+        <div *ngIf="uname.invalid">
+            <p>UserName cant be blank</p>
+        </div>
+        Password:<input type="password" formControlName="pass"/>
+        Email:<input type="email" formControlName="em"/>
+        <div *ngIf="em.invalid &&(em.dirty || em.touched)">
+            <div *ngIf="em.errors?.['required']">Email cant be null</div>
+            <div *ngIf="em.errors?.['emailDomain']">Email must be siemens.com</div>
+            
+        </div>
+        City:<input type="text" formControlName="city"/>
+        <button class="btn btn-primary">Register</button>
+
+    </form>
+</div>
