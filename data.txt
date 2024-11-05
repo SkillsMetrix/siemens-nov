@@ -1,59 +1,44 @@
-import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from "@angular/common/http";
-import { Observable, of, tap } from "rxjs";
-
-
-export class CacheInter implements HttpInterceptor{
-    private _cache: Map<string,{expireDate:Date; response: HttpResponse<any>}>= new Map()  
-    intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-
-        if(req.method !=='GET'){
-            return next.handle(req)
-        }
-        const cachedResponse=this._cache.get(req.url)
-        if(cachedResponse && cachedResponse.expireDate <= new Date()){
-            this._cache.delete(req.url)
-            return this._sendRequest(req,next)
-        }
-        return cachedResponse ? of(cachedResponse.response): this._sendRequest(req,next)
-}
-
-private _sendRequest(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>>{
-
-    return next.handle(req).pipe(
-        tap((event)=>{
-            if(event instanceof HttpResponse){
-                const expireDate=new Date(Date.now() +10 *1000);
-                this._cache.set(req.url,{
-                    expireDate: expireDate,
-                    response:event
-                })
-            }
-        }
-    ))
-}}
-
-
----------
-
-
-import { HttpEvent, HttpEventType, HttpHandler, HttpInterceptor, HttpRequest } from "@angular/common/http";
-import { Observable, tap } from "rxjs";
-
-
-
-export class Logger implements HttpInterceptor{
-    intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-        
-        console.log('Requested URL ' +req.url);
-
-        return next.handle(req).pipe(
-            tap(event => {
-                if(event.type == HttpEventType.Response){
-                console.log('data res recieved');
+<table class="table">
+    <thead>
+        <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Full Name</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                {{firstName}}
+            </td>
+            <td>
+                {{lastName}}
+            </td>
+            <td>
+                {{fullName}}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" [value]="firstName" #fname placeholder="Change First Name">
+                    <button (click)="changeFirstName(fname.value)" class="btn btn-outline-primary" type="button">
+                        Change First Name
+                    </button>
+                </div>
                 
-                }
-            })
-        )
-        
-    }
-}
+            </td>
+            <td>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" [value]="lastName" #lname placeholder="Change Last Name">
+                    <button (click)="changeLastName(lname.value)" class="btn btn-outline-primary" type="button">
+                        Change Last Name
+                    </button>
+                </div>
+            </td>
+            <td>
+            </td>
+        </tr>
+    </tbody>
+    
+</table>
