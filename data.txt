@@ -1,78 +1,35 @@
-import { Component } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from "@angular/common/http";
+import { Observable, of, tap } from "rxjs";
 
-@Component({
-  selector: 'app-datadriven',
-  templateUrl: './datadriven.component.html',
-  styleUrl: './datadriven.component.css'
-})
-export class DatadrivenComponent {
-  myForm: FormGroup
-  uname: FormControl
-  em: FormControl
-  pass: FormControl
-  city: FormControl
 
-  createFormControls() {
-    this.uname = new FormControl('', Validators.required)
-    this.pass = new FormControl('', [Validators.required, Validators.minLength(6)])
-    this.em = new FormControl('', [Validators.required,Validators.email, this.emailDomainValidator])
-    this.city = new FormControl('')
-  }
-  createForm() {
-    this.myForm = new FormGroup({
-      uname: this.uname,
-      em: this.em,
-      pass: this.pass,
-      city: this.city
-    })
-  }
-  constructor() {
-    this.createFormControls()
-    this.createForm()
-  }
-  addUser() {
-    console.log(this.myForm.value);
+export class CacheInter implements HttpInterceptor{
+    private _cache: Map<string,{expireDate:Date; response: HttpResponse<any>}>= new Map()  
+    intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 
-  }
-  emailDomainValidator(control: FormControl) {
-     let email = control.value
-    if (email && email.indexOf('@') != -1) {
-      let [data, domain] = email.split('@')
-      if (domain !== 'siemens.com') {
-        return {
-          emailDomain: {
-            myDomain: domain
-          }
+        if(req.method !=='GET'){
+            return next.handle(req)
         }
-      }
-    }
-    return null
-  }
-
+        const cachedResponse=this._cache.get(req.url)
+        if(cachedResponse && cachedResponse.expireDate <= new Date()){
+            this._cache.delete(req.url)
+            return this._sendRequest(req,next)
+        }
+        return cachedResponse ? of(cachedResponse.response): this._sendRequest(req,next)
 }
 
+private _sendRequest(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>>{
+
+    return next.handle(req).pipe(
+        tap((event)=>{
+            if(event instanceof HttpResponse){
+                const expireDate=new Date(Date.now() +10 *1000);
+                this._cache.set(req.url,{
+                    expireDate: expireDate,
+                    response:event
+                })
+            }
+        }
+    ))
+}}
 
 
----------
-
-
-
-<div class="component">
-    <form (ngSubmit)="addUser()" [formGroup]="myForm">
-        UserName:<input type="text"  formControlName="uname"/>
-        <div *ngIf="uname.invalid">
-            <p>UserName cant be blank</p>
-        </div>
-        Password:<input type="password" formControlName="pass"/>
-        Email:<input type="email" formControlName="em"/>
-        <div *ngIf="em.invalid &&(em.dirty || em.touched)">
-            <div *ngIf="em.errors?.['required']">Email cant be null</div>
-            <div *ngIf="em.errors?.['emailDomain']">Email must be siemens.com</div>
-            
-        </div>
-        City:<input type="text" formControlName="city"/>
-        <button class="btn btn-primary">Register</button>
-
-    </form>
-</div>
