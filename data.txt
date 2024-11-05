@@ -42,3 +42,34 @@
     </tbody>
     
 </table>
+
+
+---------
+
+import { Component, computed, signal } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.css'
+})
+export class AppComponent {
+  title = 'change-detect';
+
+   firstName= signal('admin')
+   lastName= signal('manager')
+
+  fullName=computed(()=>{
+return this.firstName() + ' '+ this.lastName()
+   })
+
+
+
+   changeFirstName(fname:any){
+    this.firstName=fname
+   }
+   changeLastName(lname:any){
+    this.lastName=lname
+   }
+}
+
